@@ -3,8 +3,8 @@
 import numpy as np
 
 numSteps = 10000
-hSize = 5
-#stepSize = 1e-6
+hSize = 10
+#stepSize = 1e-5
 
 def main():
     xTrain, yTrain = loadTxtFile('netflix-train.txt')
@@ -16,9 +16,14 @@ def main():
     for i in range(30):
         print '=' * 20, 'Step size =', stepSize, '=' * 20
         hThetas, yThetas = train(xTrain, yTrain, stepSize)
+        print ''
         test(hThetas, yThetas, xTest, yTest)
+        print ''
         stepSize *= 0.1
 
+# x is a m x n matrix where m is number of samples and n is number of input features
+# y is a m x 1 matrix where m is number of samples
+# returns hThetas, a n x z matrix where n is number of input features and z is the number of hidden features
 def train(x, y, stepSize):
     x = np.array(x)
     y = np.array(y)
@@ -32,19 +37,7 @@ def train(x, y, stepSize):
     yStd = (2.0 / (hSize + 1)) ** 0.5
     yThetas = np.random.normal(0, yStd, (hSize, 1))
     
-    hOnes = np.ones((hSize, numSamples))
-    yOnes = np.ones((1, numSamples))
-    
     for j in range(numSteps + 1):
-        """
-        if j % 500 == 0:
-            print '=' * 30 + ' Iteration {} '.format(j) + '=' * 30
-            
-            print 'Current model parameters:'
-            for i in range(len(thetas)):
-                print '\\theta_{{{}}} ='.format(i), thetas[i], '\\\\'
-            print 'Log likelihood of data: {0:.3f}\n'.format(LL(thetas, x, y))
-        """
         h = sigmoid(np.matmul(x, hThetas))
         yHat = sigmoid(np.matmul(h, yThetas))
         hGradients = np.transpose(yThetas) * np.matmul(np.transpose(x), (y - yHat) * (h * (1 - h)))
@@ -52,21 +45,26 @@ def train(x, y, stepSize):
         
         hThetas += stepSize * hGradients
         yThetas += stepSize * yGradients
+        
+        if j % 500 == 0:
+            print 'Iteration {} -> Log likelihood of data: {}'.format(j, LL(y, yHat))
     
     return hThetas, yThetas
 
+# computes sigmoid over all values of x
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
-def LL(thetas, x, y):
-    sum = 0.0
-    for i in range(len(x)):
-        sum += y[i] * np.log(sigmoid(np.dot(thetas, x[i]))) + (1 - y[i]) * np.log(1 - sigmoid(np.dot(thetas, x[i])))
-    return sum
+# returns the LL
+# y and yHat are both m x 1 column vectors where m is number of samples
+# getting an error with np.dot(y, np.log(yHat)) because it is performing
+# matrix multiplication with (m x 1) * (m x 1) -> use transpose instead
+def LL(y, yHat):
+    return np.dot(np.transpose(y), np.log(yHat)) + np.dot(np.transpose(1 - y), np.log(1 - yHat))
 
 # loads a .txt file
-# returns 2D matrix of x's with size n by m
-# and a vector of y's with length n
+# returns m x n matrix of x's where m is number of samples and n is number of input features
+# and an m x 1 vector of y's where m is number of samples
 def loadTxtFile(filename):
     numFeatures = 0
     numSamples = 0
@@ -108,15 +106,8 @@ def test(hThetas, yThetas, x, y):
 # picks value of y that maximizes the likelihood
 # of the sample having its values
 def predict(hThetas, yThetas, sample):
-    hSize = len(yThetas)
-    hOnes = np.ones((hSize, 1))
-    
-    temp = np.matmul(np.transpose(hThetas), sample)
-    temp = np.reshape(temp, (len(temp), 1))
-    h = hOnes / (hOnes + (np.exp(-temp)))
-    yHat = 1 / (1 + (np.exp(-np.matmul(np.transpose(h), yThetas))))
-    
-#    return 1 if yHat[0] > 0.5 else 0
+    h = sigmoid(np.matmul(sample, hThetas))
+    yHat = sigmoid(np.matmul(h, yThetas))
     return yHat[0] > 0.5
 
 if __name__ == '__main__':
