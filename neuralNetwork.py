@@ -4,27 +4,18 @@ import numpy as np
 
 numSteps = 10000
 hSize = 10
-#stepSize = 1e-5
+stepSize = 1e-5
 
 def main():
     xTrain, yTrain = loadTxtFile('netflix-train.txt')
-#    hThetas, yThetas = train(xTrain, yTrain)
+    hThetas, yThetas = train(xTrain, yTrain)
     xTest, yTest = loadTxtFile('netflix-test.txt')
-#    test(hThetas, yThetas, xTest, yTest)
-
-    stepSize = 0.01
-    for i in range(30):
-        print '=' * 20, 'Step size =', stepSize, '=' * 20
-        hThetas, yThetas = train(xTrain, yTrain, stepSize)
-        print ''
-        test(hThetas, yThetas, xTest, yTest)
-        print ''
-        stepSize *= 0.1
+    test(hThetas, yThetas, xTest, yTest)
 
 # x is a m x n matrix where m is number of samples and n is number of input features
 # y is a m x 1 matrix where m is number of samples
 # returns hThetas, a n x z matrix where n is number of input features and z is the number of hidden features
-def train(x, y, stepSize):
+def train(x, y):
     x = np.array(x)
     y = np.array(y)
     
@@ -45,9 +36,6 @@ def train(x, y, stepSize):
         
         hThetas += stepSize * hGradients
         yThetas += stepSize * yGradients
-        
-        if j % 500 == 0:
-            print 'Iteration {} -> Log likelihood of data: {}'.format(j, LL(y, yHat))
     
     return hThetas, yThetas
 
